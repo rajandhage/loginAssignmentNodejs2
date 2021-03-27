@@ -1,0 +1,6 @@
+packages to learn
+	mongoose
+	Joe
+	bcryptjs
+	jsonwebtoken
+new line

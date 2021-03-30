@@ -39,4 +39,4 @@ app.get('/*', (req, res)=>{
   }
 )
 
-app.listen(process.env.BACKEND_PORT, () => console.log('server up and running'));
+app.listen(process.env.BACKEND_PORT, () => console.log('server up and running on port ' + process.env.BACKEND_PORT));

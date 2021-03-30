@@ -33,10 +33,10 @@ app.use('/api/user/', authRoute);
 app.use('/api/user/settings', settingsRoute);
 app.use('/api/posts', postRoute);
 
-//not yet updated
+//page not found
 app.get('/*', (req, res)=>{
     res.send('404 page not found');
   }
 )
 
-app.listen(process.env.LISTEN_PORT, () => console.log('server up and running'));
+app.listen(process.env.BACKEND_PORT, () => console.log('server up and running'));

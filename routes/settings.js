@@ -48,6 +48,8 @@ router.post('/resetPassword', auth , async (req, res) => {
     res.send('Password updated successfully');
 })
 
+
+//page not found
 router.get('/*', (req, res)=>{
     res.send('404 page not found');
   }

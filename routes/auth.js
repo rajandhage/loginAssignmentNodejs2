@@ -9,6 +9,9 @@ var nodemailer = require("nodemailer");
 const dotenv = require('dotenv');
 const ip = require('ip');
 
+
+
+
 //registration
 router.post('/register',async (req, res)=>{
     //validation of req data
@@ -58,7 +61,7 @@ router.post('/register',async (req, res)=>{
     const verificationToken = jwt.sign({_id : savedUser._id}, process.env.TOKEN_SECRET)
     //we need to replace req.get('host') with address of deploying machine
     //const link = "http://"+req.get('host')+"/api/user/verifyEmail?verificationToken=" + verificationToken;
-    const link = "http://" + ip.address() + ":" + process.env.LISTEN_PORT + "/api/user/verifyEmail?verificationToken=" + verificationToken;
+    const link = "http://" + ip.address() + ":" + process.env.BACKEND_PORT + "/api/user/verifyEmail?verificationToken=" + verificationToken;
 
     //sending verification email
     //configuring mail properties
@@ -143,12 +146,47 @@ router.post('/login',async (req, res) => {
     }
 
     //create and assign token   
-    const expiryTimeSeconds = 60 * 2; //in seconds
-    const token = jwt.sign({_id : existingUser._id}, process.env.TOKEN_SECRET, {expiresIn : process.env.TOKEN_EXPIRY_TIME});
-    //const token = jwt.sign({_id : existingUser._id}, process.env.TOKEN_SECRET);
-    res.header('auth-token', token).send('Logged in!!');
+    //const token = jwt.sign({_id : existingUser._id}, process.env.TOKEN_SECRET, {expiresIn : process.env.TOKEN_EXPIRY_TIME});
+    const token = generateAccessToken({_id : existingUser._id});
+    res.setHeader('auth-token', token);
+    
+    const refreshToken = jwt.sign({_id : existingUser._id}, process.env.REFRESH_TOKEN_SECRET);
+    refreshTokens.push(refreshToken);
+    res.setHeader('refershToken', refreshToken);
+
+    res.send('Logged in!!');
     //res.send('Logged in!!')
 })
+
+function generateAccessToken(tokenInputObject){
+    return jwt.sign(tokenInputObject, process.env.TOKEN_SECRET, {expiresIn : process.env.TOKEN_EXPIRY_TIME});
+}
+
+//refershToken
+let refreshTokens = [];
+
+router.post('/refreshToken', async (req, res) => {
+    console.log(refreshTokens);
+    const refreshToken = req.body.refreshToken;
+    console.log(refreshToken)
+    if(!refreshToken) return res.status(401).send('no refresh token present in request');
+    if(!refreshTokens.includes(refreshToken)) return res.status(403).send('no such refresh token found in db');
+
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user)=>{
+        if(err) return res.send(403).send('wrong refresh token');
+        const accessToken = generateAccessToken({_id : user._id});
+        return res.send(accessToken);
+    })
+})
+
+//logout
+router.delete('/logout', (req, res) => {
+    refreshTokens = refreshTokens.filter(token => token !== req.body.refreshToken);
+    console.log(refreshTokens);
+    res.send('deleted refresh token');
+    
+})
+
 
 router.post('/forgotPassword', async (req, res) => {
     //validate email format
@@ -222,6 +260,7 @@ router.post('/forgotPassword', async (req, res) => {
     
 })
 
+//page not found
 router.get('/*',  (req, res)=>{
     res.send('404 page not found');
   }

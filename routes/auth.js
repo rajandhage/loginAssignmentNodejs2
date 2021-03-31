@@ -13,7 +13,7 @@ const ip = require('ip');
 
 
 //registration
-router.post('/register',async (req, res)=>{
+router.post('/register', async (req, res)=>{
     //validation of req data
     const {error} = validation.registerValidation(req);
     if(error){
@@ -58,7 +58,7 @@ router.post('/register',async (req, res)=>{
     }
 
     //generating validation link
-    const verificationToken = jwt.sign({_id : savedUser._id}, process.env.TOKEN_SECRET)
+    const verificationToken = jwt.sign({_id : savedUser._id}, process.env.TOKEN_SECRET, {expiresIn : process.env.REGISTRATION_TOKEN_EXPIRY_TIME})
     //we need to replace req.get('host') with address of deploying machine
     //const link = "http://"+req.get('host')+"/api/user/verifyEmail?verificationToken=" + verificationToken;
     const link = "http://" + ip.address() + ":" + process.env.BACKEND_PORT + "/api/user/verifyEmail?verificationToken=" + verificationToken;
@@ -148,14 +148,14 @@ router.post('/login',async (req, res) => {
     //create and assign token   
     //const token = jwt.sign({_id : existingUser._id}, process.env.TOKEN_SECRET, {expiresIn : process.env.TOKEN_EXPIRY_TIME});
     const token = generateAccessToken({_id : existingUser._id});
-    res.setHeader('auth-token', token);
+    //res.setHeader('accessToken', token);
     
     const refreshToken = jwt.sign({_id : existingUser._id}, process.env.REFRESH_TOKEN_SECRET);
     refreshTokens.push(refreshToken);
-    res.setHeader('refershToken', refreshToken);
+    //res.setHeader('refreshToken', refreshToken);
 
-    res.send('Logged in!!');
-    //res.send('Logged in!!')
+    //res.send('Logged in!!');
+    res.header('accessToken', token).header('refreshToken', refreshToken).send('Logged in!!')
 })
 
 function generateAccessToken(tokenInputObject){
@@ -166,9 +166,7 @@ function generateAccessToken(tokenInputObject){
 let refreshTokens = [];
 
 router.post('/refreshToken', async (req, res) => {
-    console.log(refreshTokens);
     const refreshToken = req.body.refreshToken;
-    console.log(refreshToken)
     if(!refreshToken) return res.status(401).send('no refresh token present in request');
     if(!refreshTokens.includes(refreshToken)) return res.status(403).send('no such refresh token found in db');
 
@@ -182,7 +180,7 @@ router.post('/refreshToken', async (req, res) => {
 //logout
 router.delete('/logout', (req, res) => {
     refreshTokens = refreshTokens.filter(token => token !== req.body.refreshToken);
-    console.log(refreshTokens);
+    //console.log(refreshTokens);
     res.send('Logged Out!!');
     
 })

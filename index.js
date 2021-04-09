@@ -16,8 +16,17 @@ dotenv.config();
 var corsOptions = {
     origin: "http://localhost:3000"
   };
-  app.use(cors(corsOptions));
+  
+app.use(cors(corsOptions));
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
 //connect to DB
 mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true, useUnifiedTopology: true } , ()=>console.log('Connnected to db!!'));
 

@@ -25,7 +25,7 @@ router.post('/register', async (req, res)=>{
     const existingData = await User.findOne({email : req.body.email});
     if(existingData){
         if(existingData.isValidated === true)
-            return res.status(402).send('User already exists');
+            return res.status(409).send('User already exists');
         else{
             var user = existingData;
             
@@ -122,7 +122,7 @@ router.get('/verifyEmail', verifyJWT.authEmailVerification , async (req, res) =>
 })
 
 //login
-router.post('/login',async (req, res) => {
+router.post('/login', async (req, res) => {
     //validation of data
     const {error} = validation.loginValidation(req);
     if(error){
@@ -166,14 +166,25 @@ function generateAccessToken(tokenInputObject){
 let refreshTokens = [];
 
 router.post('/refreshToken', async (req, res) => {
+    const {error} = validation.refreshTokenValidation(req);
+    if(error){
+        return res.status(400).send(error.details[0].message);
+    }
+
     const refreshToken = req.body.refreshToken;
-    if(!refreshToken) return res.status(401).send('no refresh token present in request');
-    if(!refreshTokens.includes(refreshToken)) return res.status(403).send('no such refresh token found in db');
+    if(!refreshToken){ 
+        return res.status(401).send('no refresh token present in request');
+    }
+    if(!refreshTokens.includes(refreshToken)){
+        return res.status(403).send('no such refresh token found in db');
+    }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user)=>{
-        if(err) return res.send(403).send('wrong refresh token');
+        if(err){
+            return res.send(403).send('wrong refresh token');
+        }
         const accessToken = generateAccessToken({_id : user._id});
-        return res.send(accessToken);
+        return res.send({accessToken});
     })
 })
 

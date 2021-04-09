@@ -38,7 +38,15 @@ const resetPasswordValidation = (req) => {
 
     return schema.validate({email : req.body.email, currentPassword : req.body.currentPassword, newPassword : req.body.newPassword, confirmNewPassword : req.body.confirmNewPassword});
 }
+
+const refreshTokenValidation = (req) => {
+    const schema = Joi.object({
+        refreshToken : Joi.string()
+    })
+    return schema.validate({refreshToken : req.body.refreshToken});
+}
 module.exports.registerValidation = registerValidation;
 module.exports.loginValidation = loginValidation;
 module.exports.forgotPasswordValidation = forgotPasswordValidation;
 module.exports.resetPasswordValidation = resetPasswordValidation;
+module.exports.refreshTokenValidation = refreshTokenValidation;
